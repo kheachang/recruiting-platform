@@ -82,14 +82,10 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
     );
   };
 
-  const unAppliedRoles = roles.filter(role =>
-    !candidate?.applications.some(app => app.jobs.some(job => job.id.toString() === role.id))
-  ).filter(role =>
-    !candidate?.applications.some(app => 
-      app.jobs.some(job => job.id.toString() === role.id) && 
-      app.current_stage.name
-    )
-  );
+  const unAppliedRoles = roles.filter(role => {
+    const mostRecentApplication = getMostRecentApplication(role.id);
+    return !mostRecentApplication || !mostRecentApplication.current_stage.name;
+  });
 
   const fetchItems = async () => {
     return roles.map(role => {
@@ -115,8 +111,6 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
   return (
     <div className="w-full max-w-6xl mx-auto p-6">
       <h2 className="text-3xl font-bold mb-6">Candidate Dashboard for {candidate.first_name} {candidate.last_name}</h2>
-      
-      {/* Candidate Metadata */}
       <section className="mb-6">
         <h3 className="text-2xl font-semibold mb-4">Candidate Details:</h3>
         <div className="mb-4">
@@ -182,7 +176,7 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
         </div>
       </section>
 
-      {/* Submit Application */}
+
       <section>
         <h3 className="text-2xl font-semibold mb-4">Submit Application To:</h3>
         <div className="grid grid-cols-1 gap-4">
@@ -206,8 +200,6 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
           )}
         </div>
       </section>
-
-      {/* Track Applications */}
       <section className="mb-10">
         <h3 className="text-2xl font-semibold mb-4">Track Your Applications:</h3>
         <p>Drag and drop your applications as they progress through the stages.</p>
