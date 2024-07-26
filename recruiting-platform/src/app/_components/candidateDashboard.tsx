@@ -12,7 +12,6 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
 
   const getCandidate = api.item.getCandidateById.useQuery({ id: candidateId });
   const getRoles = api.item.getAllRoles.useQuery();
-
   useEffect(() => {
     if (getCandidate.data) {
       setCandidate(getCandidate.data);
@@ -33,14 +32,20 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
     }
   }, [getRoles.data, getRoles.error]);
 
+  // Filter roles that the candidate has not applied to
   const unAppliedRoles = roles.filter(role =>
-    !candidate?.roleStatuses.some((rs: any) => rs.roleId === role.id)
+    !candidate?.applications.some((app: any) => app.jobs.some((job: any) => job.id.toString() === role.id))
   );
 
   const fetchItems = async () => {
     return roles.map(role => ({
       id: role.id,
-      roleStatuses: candidate?.roleStatuses.filter(roleStatuses => roleStatuses.roleId === role.id) || []
+      roleStatuses: candidate?.applications.filter((app: any) =>
+        app.jobs.some((job: any) => job.id.toString() === role.id)
+      ).map((app: any) => ({
+        roleId: role.id,
+        status: app.status,
+      })) || []
     }));
   };
 
@@ -54,7 +59,7 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
 
   return (
     <div className="w-full max-w-6xl mx-auto p-6">
-      <h2 className="text-3xl font-bold mb-6">Candidate Dashboard for {candidate.name}</h2>
+      <h2 className="text-3xl font-bold mb-6">Candidate Dashboard for {candidate.first_name} {candidate.last_name}</h2>
       <section>
         <h3 className="text-2xl font-semibold mb-4">Submit Application To:</h3>
         <div className="grid grid-cols-1 gap-4">

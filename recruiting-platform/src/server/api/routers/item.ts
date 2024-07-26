@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import fetch from "node-fetch";
 
 interface Candidate {
   id: string;
@@ -43,12 +44,41 @@ export const itemsRouter = createTRPCRouter({
       );
     }),
 
-  getCandidateById: publicProcedure
+    getCandidateById: publicProcedure
     .input(z.object({ id: z.string() }))
-    .query(({ input }) => {
-      return candidates.find((candidate) => candidate.id === input.id);
-    }),
+    .query(async ({ input }) => {
+      const candidateId = input.id;
+      const apiUrl = `https://harvest.greenhouse.io/v1/candidates/${candidateId}`;
 
+      console.log(`Fetching candidate with ID: ${candidateId}`);
+      console.log(`API URL: ${apiUrl}`);
+
+      try {
+        const response = await fetch(apiUrl, {
+          method: "GET",
+          headers: {
+            Authorization: `Basic ${Buffer.from(`${process.env.GREENHOUSE_API_KEY}:`).toString("base64")}`,
+            "Content-Type": "application/json",
+            "On-Behalf-Of": "4408810007", // Replace with the actual Greenhouse user ID
+          },
+        });
+
+        console.log(`Response status: ${response.status}`);
+
+        if (!response.ok) {
+          const errorText = await response.text(); // Read the error text for debugging
+          console.error(`Error response text: ${errorText}`);
+          throw new Error(`Failed to fetch candidate: ${response.status} ${response.statusText} - ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log(`Candidate data: ${JSON.stringify(data)}`);
+        return data;
+      } catch (error) {
+        console.error(`Error fetching candidate: ${error.message}`);
+        throw new Error(`Failed to fetch candidate: ${error.message}`);
+      }
+    }),
   getAllRoles: publicProcedure.query(() => {
     return roles;
   }),

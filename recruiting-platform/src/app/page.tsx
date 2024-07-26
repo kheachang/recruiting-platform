@@ -6,24 +6,6 @@ import { useState } from "react";
 
 export default function Home() {
   const router = useRouter();
-  const { mutate: createCandidate, isLoading } = api.candidate.createCandidate.useMutation({
-    onSuccess: (data) => {
-      router.push(`/candidate/${data.id}`);
-    },
-    onError: (error) => {
-      console.error("Error creating candidate:", error);
-    },
-  });
-
-  const handleCreateCandidate = () => {
-    createCandidate({
-      firstName: "John",
-      lastName: "Doe",
-      email: "john.doe@example.com",
-      phone: "123-456-7890",
-    });
-  };
-
   const handleNavigate = (path: string) => {
     router.push(path);
   };
@@ -35,8 +17,7 @@ export default function Home() {
       <div className="flex justify-center gap-4 mb-6">
         <button
           className="btn w-64 rounded-full"
-          onClick={handleCreateCandidate}
-          disabled={isLoading}
+          onClick={() => handleNavigate('/candidate')}
         >
           Candidate Dashboard
         </button>
