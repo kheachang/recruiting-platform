@@ -6,12 +6,35 @@ import { Role } from "./role";
 import { Tracker } from "./tracker";
 import Link from "next/link";
 
+interface Application {
+  jobs: { id: string }[];
+  status: string;
+}
+
+interface Candidate {
+  id: string;
+  first_name: string;
+  last_name: string;
+  applications: Application[];
+}
+
+interface Job {
+  id: string;
+  name: string;
+  requisition_id: string;
+  status: string;
+  departments: { id: string; name: string }[];
+  offices: { id: string; name: string }[];
+  custom_fields: { salary_range: { min_value: string; max_value: string; unit: string } };
+}
+
 export function CandidateDashboard({ candidateId }: { candidateId: string }) {
-  const [candidate, setCandidate] = useState<any>(null);
-  const [roles, setRoles] = useState<any[]>([]);
+  const [candidate, setCandidate] = useState<Candidate | null>(null);
+  const [roles, setRoles] = useState<Job[]>([]);
 
   const getCandidate = api.item.getCandidateById.useQuery({ id: candidateId });
-  const getRoles = api.item.getAllRoles.useQuery();
+  const getJob = api.item.getJobById.useQuery({ id: "4280628007" }); // hard-coded job ID
+
   useEffect(() => {
     if (getCandidate.data) {
       setCandidate(getCandidate.data);
@@ -21,35 +44,30 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
   }, [getCandidate.data, getCandidate.error]);
 
   useEffect(() => {
-    if (getRoles.data) {
-      setRoles(getRoles.data.map((role: any) => ({
-        id: role.id.toString(),
-        name: role.name,
-        company: role.company,
-      })));
-    } else if (getRoles.error) {
-      console.error("Error fetching roles:", getRoles.error);
+    if (getJob.data) {
+      setRoles([getJob.data]); // dealing with 1 job for now 
+    } else if (getJob.error) {
+      console.error("Error fetching job:", getJob.error);
     }
-  }, [getRoles.data, getRoles.error]);
+  }, [getJob.data, getJob.error]);
 
-  // Filter roles that the candidate has not applied to
   const unAppliedRoles = roles.filter(role =>
-    !candidate?.applications.some((app: any) => app.jobs.some((job: any) => job.id.toString() === role.id))
+    !candidate?.applications.some((app) => app.jobs.some((job) => job.id.toString() === role.id))
   );
 
   const fetchItems = async () => {
     return roles.map(role => ({
       id: role.id,
-      roleStatuses: candidate?.applications.filter((app: any) =>
-        app.jobs.some((job: any) => job.id.toString() === role.id)
-      ).map((app: any) => ({
+      roleStatuses: candidate?.applications.filter((app) =>
+        app.jobs.some((job) => job.id.toString() === role.id)
+      ).map((app) => ({
         roleId: role.id,
         status: app.status,
       })) || []
     }));
   };
 
-  if (getCandidate.isLoading) {
+  if (getCandidate.isLoading || getJob.isLoading) {
     return <div>Loading...</div>;
   }
 
@@ -69,7 +87,6 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
                 <Role
                   id={parseInt(role.id, 10)}
                   initialTitle={role.name}
-                  initialCompany={role.company}
                 />
                 <Link
                   href={`/apply/${role.id}`}
@@ -95,7 +112,6 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
                 key={item.id}
                 id={parseInt(item.id, 10)}
                 initialTitle={roles.find(role => role.id === item.id)?.name || "Unknown"}
-                initialCompany={roles.find(role => role.id === item.id)?.company || "Unknown"}
               />
             )}
             fetchItems={fetchItems}

@@ -109,4 +109,41 @@ export const itemsRouter = createTRPCRouter({
       }
       throw new Error("Candidate not found");
     }),
+    
+    getJobById: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input }) => {
+      const jobId = input.id;
+      const apiUrl = `https://harvest.greenhouse.io/v1/jobs/${jobId}`;
+
+      console.log(`Fetching job with ID: ${jobId}`);
+      console.log(`API URL: ${apiUrl}`);
+
+      try {
+        const response = await fetch(apiUrl, {
+          method: "GET",
+          headers: {
+            Authorization: `Basic ${Buffer.from(`${process.env.GREENHOUSE_API_KEY}:`).toString("base64")}`,
+            "Content-Type": "application/json",
+            "On-Behalf-Of": "4408810007",
+          },
+        });
+
+        console.log(`Response status: ${response.status}`);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`Error response text: ${errorText}`);
+          throw new Error(`Failed to fetch job: ${response.status} ${response.statusText} - ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log(`Job data: ${JSON.stringify(data)}`);
+        return data;
+      } catch (error) {
+        console.error(`Error fetching job: ${error.message}`);
+        throw new Error(`Failed to fetch job: ${error.message}`);
+      }
+    }),
+
 });
