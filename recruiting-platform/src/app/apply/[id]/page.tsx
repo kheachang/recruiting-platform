@@ -8,27 +8,23 @@ export default function ApplicationForm({ params }: { params: { id: string } }) 
   const router = useRouter();
   const { id } = params;
 
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
   const [resume, setResume] = useState<File | null>(null);
 
-  const submitApplication = api.application.submit.useMutation({
-    onSuccess: () => {
-      router.push("/application-submitted");
+  const submitApplication = api.item.submitApplication.useMutation({
+    onSuccess: async () => {
+      router.push(`/candidate/`);
+    },
+    onError: (error) => {
+      console.error("Error submitting application:", error.message);
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     submitApplication.mutate({
-      roleId: Number(id),
-      name,
-      phone,
-      email,
-      message,
-      // TODO: handle file upload separately
+      jobId: id,
+      candidateId: "8044241007",
     });
   };
 
@@ -38,50 +34,13 @@ export default function ApplicationForm({ params }: { params: { id: string } }) 
       <form onSubmit={handleSubmit} className="space-y-4">
         <label className="form-control w-full max-w-xs">
           <div className="label">
-            <span className="label-text">Name</span>
-          </div>
-          <input type="text" placeholder="Type here" className="input input-bordered w-full max-w-xs"
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-        </label>
-        <label className="form-control w-full max-w-xs">
-          <div className="label">
-            <span className="label-text">Phone</span>
-          </div>
-          <input type="text" placeholder="Type here" className="input input-bordered w-full max-w-xs"
-            id="phone"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            required />
-        </label>
-        <label className="form-control w-full max-w-xs">
-          <div className="label">
-            <span className="label-text">Email</span>
-          </div>
-          <input type="text" placeholder="Type here" className="input input-bordered w-full max-w-xs"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required />
-        </label>
-        <label className="form-control w-full max-w-xs">
-          <div className="label">
-            <span className="label-text">Message to Recruiter</span>
-          </div>
-          <input type="text" placeholder="Type here" className="input input-bordered w-full max-w-xs"
-            id="message"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            required />
-        </label>
-        <label className="form-control w-full max-w-xs">
-          <div className="label">
             <span className="label-text">Upload Resume</span>
           </div>
-          <input type="file" className="file-input file-input-bordered w-full max-w-xs" />
+          <input
+            type="file"
+            className="file-input file-input-bordered w-full max-w-xs"
+            onChange={(e) => setResume(e.target.files ? e.target.files[0] : null)}
+          />
         </label>
         <button className="btn">Submit</button>
       </form>

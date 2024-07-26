@@ -14,7 +14,6 @@ export const appRouter = createTRPCRouter({
   post: postRouter,
   role: roleRouter,
   item: itemsRouter,
-  application: applicationRouter,
   candidate: candidateRouter
 });
 

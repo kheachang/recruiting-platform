@@ -44,7 +44,7 @@ export const itemsRouter = createTRPCRouter({
       );
     }),
 
-    getCandidateById: publicProcedure
+  getCandidateById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ input }) => {
       const candidateId = input.id;
@@ -68,7 +68,9 @@ export const itemsRouter = createTRPCRouter({
         if (!response.ok) {
           const errorText = await response.text(); // Read the error text for debugging
           console.error(`Error response text: ${errorText}`);
-          throw new Error(`Failed to fetch candidate: ${response.status} ${response.statusText} - ${errorText}`);
+          throw new Error(
+            `Failed to fetch candidate: ${response.status} ${response.statusText} - ${errorText}`,
+          );
         }
 
         const data = await response.json();
@@ -109,8 +111,8 @@ export const itemsRouter = createTRPCRouter({
       }
       throw new Error("Candidate not found");
     }),
-    
-    getJobById: publicProcedure
+
+  getJobById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ input }) => {
       const jobId = input.id;
@@ -134,7 +136,9 @@ export const itemsRouter = createTRPCRouter({
         if (!response.ok) {
           const errorText = await response.text();
           console.error(`Error response text: ${errorText}`);
-          throw new Error(`Failed to fetch job: ${response.status} ${response.statusText} - ${errorText}`);
+          throw new Error(
+            `Failed to fetch job: ${response.status} ${response.statusText} - ${errorText}`,
+          );
         }
 
         const data = await response.json();
@@ -146,4 +150,60 @@ export const itemsRouter = createTRPCRouter({
       }
     }),
 
+  submitApplication: publicProcedure
+    .input(
+      z.object({
+        jobId: z.string(),
+        candidateId: z.string(),
+        resume: z
+          .object({
+            fileName: z.string(),
+            content: z.string(),
+            contentType: z.string(),
+          })
+          .optional(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const { jobId, candidateId, resume } = input;
+      const apiUrl = `https://harvest.greenhouse.io/v1/candidates/${candidateId}/applications`;
+
+      const body: any = {
+        job_id: jobId,
+        attachments: resume
+          ? [
+              {
+                filename: resume.fileName,
+                type: "resume",
+                content: resume.content,
+                content_type: resume.contentType,
+              },
+            ]
+          : [],
+      };
+
+      try {
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          headers: {
+            Authorization: `Basic ${Buffer.from(`${process.env.GREENHOUSE_API_KEY}:`).toString("base64")}`,
+            "Content-Type": "application/json",
+            "On-Behalf-Of": "4408810007",
+          },
+          body: JSON.stringify(body),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(
+            `Failed to submit application: ${response.status} ${response.statusText} - ${errorText}`,
+          );
+        }
+
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        throw new Error(`Failed to submit application: ${error.message}`);
+      }
+    }),
 });

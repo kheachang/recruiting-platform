@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { api } from "~/trpc/react";
 import { Role } from "./role";
@@ -7,8 +5,11 @@ import { Tracker } from "./tracker";
 import Link from "next/link";
 
 interface Application {
-  jobs: { id: string }[];
+  id: string;
+  jobs: { id: string; name: string }[];
   status: string;
+  last_activity_at: string;
+  current_stage: { id: string; name: string };
 }
 
 interface Candidate {
@@ -51,20 +52,32 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
     }
   }, [getJob.data, getJob.error]);
 
-  const unAppliedRoles = roles.filter(role =>
-    !candidate?.applications.some((app) => app.jobs.some((job) => job.id.toString() === role.id))
-  );
+  const getMostRecentApplication = (jobId: string) => {
+    const applicationsForJob = candidate?.applications.filter(app => 
+      app.jobs.some(job => job.id === jobId)
+    ) || [];
+    return applicationsForJob.reduce((mostRecent, app) => 
+      new Date(app.last_activity_at) > new Date(mostRecent.last_activity_at) ? app : mostRecent, 
+      applicationsForJob[0]
+    );
+  };
+
+  const unAppliedRoles = roles.filter(role => {
+    const mostRecentApplication = getMostRecentApplication(role.id);
+    return !mostRecentApplication || !mostRecentApplication.current_stage.name;
+  });
 
   const fetchItems = async () => {
-    return roles.map(role => ({
-      id: role.id,
-      roleStatuses: candidate?.applications.filter((app) =>
-        app.jobs.some((job) => job.id.toString() === role.id)
-      ).map((app) => ({
-        roleId: role.id,
-        status: app.status,
-      })) || []
-    }));
+    return roles.map(role => {
+      const mostRecentApplication = getMostRecentApplication(role.id);
+      return {
+        id: role.id,
+        roleStatuses: mostRecentApplication ? [{
+          roleId: role.id,
+          status: mostRecentApplication.current_stage.name,
+        }] : []
+      };
+    });
   };
 
   if (getCandidate.isLoading || getJob.isLoading) {
@@ -106,7 +119,7 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
         <p>Drag and drop your applications as they progress through the stages.</p>
         <div className="grid grid-cols-1 gap-4">
           <Tracker
-            statuses={["Applied", "Phone Screen", "Onsite", "Offer"]}
+            statuses={["Applied", "Application Review", "Offer", "Rejected"]}
             renderItem={(item) => (
               <Role
                 key={item.id}
