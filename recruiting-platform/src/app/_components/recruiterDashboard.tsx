@@ -27,7 +27,7 @@ export function RecruiterDashboard({ roleId, roleTitle, roleCompany }: Recruiter
     }
   }, [candidateData]);
 
-  const statuses = ["Applied", "Phone Screen", "Onsite", "Offer"];
+  const statuses = ["Applied", "Phone Screen", "Onsite", "Offer", "Rejected"];
 
   const fetchCandidates = async () => {
     return candidates;
