@@ -14,6 +14,6 @@ export default {
     require('daisyui'),
   ],
   daisyui: {
-    themes: "cupcake"
+    themes: ["cupcake"]
   }
 } satisfies Config;
