@@ -20,7 +20,7 @@ export function Tracker({ statuses, renderItem, fetchItems }: TrackerProps) {
 
   const getItemsByStatus = (status: string) => {
     return items.filter(item =>
-      item.roleStatuses.some(rs => rs.status === status)
+      item.roleStatuses.some(roleStatuses => roleStatuses.status === status)
     );
   };
 
