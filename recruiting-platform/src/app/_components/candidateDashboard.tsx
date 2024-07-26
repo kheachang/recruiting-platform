@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { api } from "~/trpc/react";
 import { Role } from "./role";
 import { Tracker } from "./tracker";
+import Link from "next/link";
 
 export function CandidateDashboard({ candidateId }: { candidateId: string }) {
   const [candidate, setCandidate] = useState<any>(null);
@@ -65,6 +66,12 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
                   initialTitle={role.name}
                   initialCompany={role.company}
                 />
+                <Link
+                  href={`/apply/${role.id}`}
+                  className="btn mt-3"
+                >
+                  Apply for this Role
+                </Link>
               </div>
             ))
           ) : (
