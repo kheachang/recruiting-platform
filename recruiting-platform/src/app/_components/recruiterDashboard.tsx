@@ -10,62 +10,27 @@ type RecruiterDashboardProps = {
 
 const mapCandidatesToTracker = (candidates: any[]): { [key: string]: { candidates: { id: string; name: string; applicationId: string }[] } } => {
   const tracker: { [key: string]: { candidates: { id: string; name: string; applicationId: string }[] } } = {};
-  const latestApplications = new Map<string, { id: string; name: string; status: string; appliedAt: number; applicationId: string; }>();
-  const recentRejections = new Map<string, { id: string; name: string; applicationId: string; }>();
 
   candidates.forEach((application: any) => {
     const candidateId = application.candidate_id.toString();
     const applicationId = application.id.toString();
-    const appliedAt = new Date(application.applied_at).getTime();
     const currentStatus = application.current_stage?.name || 'Unknown';
-    const status = application.status;
+    const name = application.candidate_name || `Candidate ${candidateId}`;
 
-    if (status === 'rejected') {
-      if (!recentRejections.has(candidateId) || recentRejections.get(candidateId).appliedAt < appliedAt) {
-        recentRejections.set(candidateId, {
-          id: candidateId,
-          name: `Candidate ${candidateId}`, // Adjust if actual name is available
-          applicationId,
-          appliedAt
-        });
-      }
-    } else {
-      if (!latestApplications.has(candidateId) || latestApplications.get(candidateId).appliedAt < appliedAt) {
-        latestApplications.set(candidateId, {
-          id: candidateId,
-          name: `Candidate ${candidateId}`, // Adjust if actual name is available
-          status: currentStatus,
-          appliedAt,
-          applicationId
-        });
-      }
+    if (!tracker[currentStatus]) {
+      tracker[currentStatus] = { candidates: [] };
     }
-  });
-
-  if (recentRejections.size > 0) {
-    tracker['Rejected'] = { candidates: [] };
-    recentRejections.forEach(candidate => {
-      tracker['Rejected'].candidates.push({
-        id: candidate.id,
-        name: candidate.name,
-        applicationId: candidate.applicationId
-      });
-    });
-  }
-
-  latestApplications.forEach(candidate => {
-    if (!tracker[candidate.status]) {
-      tracker[candidate.status] = { candidates: [] };
-    }
-    tracker[candidate.status].candidates.push({
-      id: candidate.id,
-      name: candidate.name,
-      applicationId: candidate.applicationId
+    
+    tracker[currentStatus].candidates.push({
+      id: candidateId,
+      name: name,
+      applicationId: applicationId
     });
   });
 
   return tracker;
 };
+
 
 export function RecruiterDashboard({ roleId, roleTitle }: RecruiterDashboardProps) {
   const [trackerData, setTrackerData] = useState<{ [key: string]: { candidates: { id: string; name: string; applicationId: string }[] } }>({});

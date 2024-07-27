@@ -2,6 +2,26 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import fetch from "node-fetch";
 
+const makeGreenhouseRequest = async (url: string) => {
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Authorization: `Basic ${Buffer.from(`${process.env.GREENHOUSE_API_KEY}:`).toString("base64")}`,
+      "Content-Type": "application/json",
+      "On-Behalf-Of": "4408810007",
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `Greenhouse API request failed: ${response.status} ${response.statusText} - ${errorText}`,
+    );
+  }
+
+  return response.json();
+};
+
 export const itemsRouter = createTRPCRouter({
   getCandidatesByRoleId: publicProcedure
     .input(z.object({ roleId: z.string() }))
@@ -10,27 +30,34 @@ export const itemsRouter = createTRPCRouter({
       const apiUrl = `https://harvest.greenhouse.io/v1/applications?job_id=${roleId}`;
 
       try {
-        const response = await fetch(apiUrl, {
-          method: "GET",
-          headers: {
-            Authorization: `Basic ${Buffer.from(`${process.env.GREENHOUSE_API_KEY}:`).toString("base64")}`,
-            "Content-Type": "application/json",
-            "On-Behalf-Of": "4408810007",
-          },
-        });
+        const applications = await makeGreenhouseRequest(apiUrl);
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(
-            `Failed to fetch applications: ${response.status} ${response.statusText} - ${errorText}`,
-          );
-        }
+        const candidatesWithDetails = await Promise.all(
+          applications.map(async (application) => {
+            const candidateId = application.candidate_id;
+            const candidateUrl = `https://harvest.greenhouse.io/v1/candidates/${candidateId}`;
+            
+            try {
+              const candidateData = await makeGreenhouseRequest(candidateUrl);
+              return {
+                ...application,
+                candidate_name: `${candidateData.first_name} ${candidateData.last_name}`,
+                candidate_details: candidateData,
+              };
+            } catch (error) {
+              console.error(`Failed to fetch candidate ${candidateId}: ${error.message}`);
+              return {
+                ...application,
+                candidate_name: `Candidate ${candidateId}`,
+                candidate_details: null,
+              };
+            }
+          }),
+        );
 
-        const candidates = await response.json();
+        console.log("API Response:", candidatesWithDetails);
 
-        console.log("API Response:", candidates);
-
-        return candidates;
+        return candidatesWithDetails;
       } catch (error) {
         console.error(`Error fetching candidates: ${error.message}`);
         throw new Error(`Failed to fetch candidates: ${error.message}`);
@@ -47,26 +74,7 @@ export const itemsRouter = createTRPCRouter({
       console.log(`API URL: ${apiUrl}`);
 
       try {
-        const response = await fetch(apiUrl, {
-          method: "GET",
-          headers: {
-            Authorization: `Basic ${Buffer.from(`${process.env.GREENHOUSE_API_KEY}:`).toString("base64")}`,
-            "Content-Type": "application/json",
-            "On-Behalf-Of": "4408810007",
-          },
-        });
-
-        console.log(`Response status: ${response.status}`);
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`Error response text: ${errorText}`);
-          throw new Error(
-            `Failed to fetch candidate: ${response.status} ${response.statusText} - ${errorText}`,
-          );
-        }
-
-        const data = await response.json();
+        const data = await makeGreenhouseRequest(apiUrl);
         console.log(`Candidate data: ${JSON.stringify(data)}`);
         return data;
       } catch (error) {
@@ -85,26 +93,7 @@ export const itemsRouter = createTRPCRouter({
       console.log(`API URL: ${apiUrl}`);
 
       try {
-        const response = await fetch(apiUrl, {
-          method: "GET",
-          headers: {
-            Authorization: `Basic ${Buffer.from(`${process.env.GREENHOUSE_API_KEY}:`).toString("base64")}`,
-            "Content-Type": "application/json",
-            "On-Behalf-Of": "4408810007",
-          },
-        });
-
-        console.log(`Response status: ${response.status}`);
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`Error response text: ${errorText}`);
-          throw new Error(
-            `Failed to fetch job: ${response.status} ${response.statusText} - ${errorText}`,
-          );
-        }
-
-        const data = await response.json();
+        const data = await makeGreenhouseRequest(apiUrl);
         console.log(`Job data: ${JSON.stringify(data)}`);
         return data;
       } catch (error) {
@@ -112,6 +101,7 @@ export const itemsRouter = createTRPCRouter({
         throw new Error(`Failed to fetch job: ${error.message}`);
       }
     }),
+
   submitApplication: publicProcedure
     .input(
       z.object({
@@ -152,7 +142,7 @@ export const itemsRouter = createTRPCRouter({
       }
     }),
 
-    moveCandidate: publicProcedure
+  moveCandidate: publicProcedure
     .input(
       z.object({
         applicationId: z.string(),
@@ -163,12 +153,12 @@ export const itemsRouter = createTRPCRouter({
     .mutation(async ({ input }) => {
       const { applicationId, fromStageId, toStageId } = input;
       const apiUrl = `https://harvest.greenhouse.io/v1/applications/${applicationId}/move`;
-  
+
       const body = {
         from_stage_id: fromStageId,
         to_stage_id: toStageId,
       };
-  
+
       try {
         const response = await fetch(apiUrl, {
           method: "POST",
@@ -179,21 +169,21 @@ export const itemsRouter = createTRPCRouter({
           },
           body: JSON.stringify(body),
         });
-  
+
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(
             `Failed to move application: ${response.status} ${response.statusText} - ${errorText}`,
           );
         }
-  
+
         const data = await response.json();
         return data;
       } catch (error) {
         throw new Error(`Failed to move application: ${error.message}`);
       }
     }),
-  
+
   getJobStagesByJobId: publicProcedure
     .input(z.object({ jobId: z.string() }))
     .query(async ({ input }) => {
