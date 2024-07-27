@@ -1,25 +1,32 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import fetch from "node-fetch";
+import { Application, Candidate, Job } from "~/server/types"
 
-const makeGreenhouseRequest = async (url: string) => {
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      Authorization: `Basic ${Buffer.from(`${process.env.GREENHOUSE_API_KEY}:`).toString("base64")}`,
-      "Content-Type": "application/json",
-      "On-Behalf-Of": "4408810007",
-    },
-  });
+const makeGreenhouseRequest = async <T>(url: string): Promise<T> => {
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${process.env.GREENHOUSE_API_KEY}:`).toString("base64")}`,
+        "Content-Type": "application/json",
+        "On-Behalf-Of": "4408810007",
+      },
+    });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Greenhouse API request failed: ${response.status} ${response.statusText} - ${errorText}`,
-    );
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `Greenhouse API request failed: ${response.status} ${response.statusText} - ${errorText}`,
+      );
+    }
+
+    const data: unknown = await response.json();
+    return data as T;
+  } catch (error) {
+    console.error(`Error in makeGreenhouseRequest: ${error}`);
+    throw new Error(`Failed to make request: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-
-  return response.json();
 };
 
 export const itemsRouter = createTRPCRouter({
@@ -30,7 +37,7 @@ export const itemsRouter = createTRPCRouter({
       const apiUrl = `https://harvest.greenhouse.io/v1/applications?job_id=${roleId}`;
 
       try {
-        const applications = await makeGreenhouseRequest(apiUrl);
+        const applications = await makeGreenhouseRequest<Application[]>(apiUrl);
 
         const candidatesWithDetails = await Promise.all(
           applications.map(async (application) => {
@@ -38,14 +45,14 @@ export const itemsRouter = createTRPCRouter({
             const candidateUrl = `https://harvest.greenhouse.io/v1/candidates/${candidateId}`;
             
             try {
-              const candidateData = await makeGreenhouseRequest(candidateUrl);
+              const candidateData = await makeGreenhouseRequest<Candidate>(candidateUrl);
               return {
                 ...application,
                 candidate_name: `${candidateData.first_name} ${candidateData.last_name}`,
                 candidate_details: candidateData,
               };
             } catch (error) {
-              console.error(`Failed to fetch candidate ${candidateId}: ${error.message}`);
+              console.error(`Failed to fetch candidate ${candidateId}: ${error}`);
               return {
                 ...application,
                 candidate_name: `Candidate ${candidateId}`,
@@ -59,8 +66,8 @@ export const itemsRouter = createTRPCRouter({
 
         return candidatesWithDetails;
       } catch (error) {
-        console.error(`Error fetching candidates: ${error.message}`);
-        throw new Error(`Failed to fetch candidates: ${error.message}`);
+        console.error(`Error fetching candidates: ${error}`);
+        throw new Error(`Failed to fetch candidates: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }),
 
@@ -78,8 +85,8 @@ export const itemsRouter = createTRPCRouter({
         console.log(`Candidate data: ${JSON.stringify(data)}`);
         return data;
       } catch (error) {
-        console.error(`Error fetching candidate: ${error.message}`);
-        throw new Error(`Failed to fetch candidate: ${error.message}`);
+        console.error(`Error fetching candidate: ${error}`);
+        throw new Error(`Failed to fetch candidate: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }),
 
@@ -97,12 +104,12 @@ export const itemsRouter = createTRPCRouter({
         console.log(`Job data: ${JSON.stringify(data)}`);
         return data;
       } catch (error) {
-        console.error(`Error fetching job: ${error.message}`);
-        throw new Error(`Failed to fetch job: ${error.message}`);
+        console.error(`Error fetching job: ${error}`);
+        throw new Error(`Failed to fetch job: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }),
 
-    submitApplication: publicProcedure
+  submitApplication: publicProcedure
     .input(
       z.object({
         jobId: z.string(),
@@ -117,7 +124,7 @@ export const itemsRouter = createTRPCRouter({
     .mutation(async ({ input }) => {
       const { jobId, candidateId, resume } = input;
       const apiUrl = `https://harvest.greenhouse.io/v1/candidates/${candidateId}/applications`;
-  
+
       const body = {
         job_id: parseInt(jobId, 10), 
         attachments: [{
@@ -127,7 +134,7 @@ export const itemsRouter = createTRPCRouter({
           content_type: resume.content_type
         }]
       };
-  
+
       try {
         const response = await fetch(apiUrl, {
           method: "POST",
@@ -138,21 +145,22 @@ export const itemsRouter = createTRPCRouter({
           },
           body: JSON.stringify(body),
         });
-  
+
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(
             `Failed to submit application: ${response.status} ${response.statusText} - ${errorText}`,
           );
         }
-  
+
         const data = await response.json();
         return data;
       } catch (error) {
-        throw new Error(`Failed to submit application: ${error.message}`);
+        console.error(`Error submitting application: ${error}`);
+        throw new Error(`Failed to submit application: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }),
-    
+
   moveCandidate: publicProcedure
     .input(
       z.object({
@@ -191,7 +199,8 @@ export const itemsRouter = createTRPCRouter({
         const data = await response.json();
         return data;
       } catch (error) {
-        throw new Error(`Failed to move application: ${error.message}`);
+        console.error(`Error moving application: ${error}`);
+        throw new Error(`Failed to move application: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }),
 
@@ -221,8 +230,8 @@ export const itemsRouter = createTRPCRouter({
         const stages = await response.json();
         return stages;
       } catch (error) {
-        console.error(`Error fetching job stages: ${error.message}`);
-        throw new Error(`Failed to fetch job stages: ${error.message}`);
+        console.error(`Error fetching job stages: ${error}`);
+        throw new Error(`Failed to fetch job stages: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }),
 });

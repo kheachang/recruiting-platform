@@ -5,14 +5,9 @@ import { useState, useEffect } from "react";
 import { NavBar } from "~/app/_components/navbar";
 import { api } from "~/trpc/react";
 
-const formatDate = (dateString: string | null) => {
-  if (!dateString) return "N/A";
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  });
+type AlertType = {
+  message: string;
+  type: 'success' | 'error';
 };
 
 export default function ApplicationForm() {
@@ -57,12 +52,13 @@ export default function ApplicationForm() {
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64Resume = reader.result as string;
+        const resumeContent = base64Resume.split(',')[1] || '';
         submitApplication.mutate({
           jobId: job.id.toString(),
           candidateId: "8044241007",
           resume: {
             filename: resume.name,
-            content: base64Resume.split(',')[1],
+            content: resumeContent,
             content_type: resume.type
           }
         });
@@ -88,11 +84,6 @@ export default function ApplicationForm() {
           <h2 className="text-2xl font-semibold mb-4">{job.name}</h2>
           <p><strong>Requisition ID:</strong> {job.requisition_id}</p>
           <p><strong>Status:</strong> {job.status}</p>
-          <p><strong>Created At:</strong> {formatDate(job.created_at)}</p>
-          <p><strong>Opened At:</strong> {formatDate(job.opened_at)}</p>
-          <p><strong>Closed At:</strong> {formatDate(job.closed_at)}</p>
-          <p><strong>Departments:</strong> {job.departments.map(dept => dept.name).join(", ")}</p>
-          <p><strong>Offices:</strong> {job.offices.map(office => office.name).join(", ")}</p>
           <p><strong>Salary Range:</strong> {job.custom_fields.salary_range.min_value} - {job.custom_fields.salary_range.max_value} {job.custom_fields.salary_range.unit}</p>
         </div>
       )}
@@ -114,9 +105,8 @@ export default function ApplicationForm() {
         <button
           type="submit"
           className="btn"
-          disabled={!resume || submitApplication.isLoading}
         >
-          {submitApplication.isLoading ? "Submitting..." : "Submit Application"}
+          Submit Application
         </button>
       </form>
     </div>

@@ -4,7 +4,7 @@ import { useState } from "react";
 
 // TODO: remove this? 
 type RoleProps = {
-  id: number;
+  id: string;
   initialTitle: string;
 };
 

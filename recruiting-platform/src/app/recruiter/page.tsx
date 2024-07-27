@@ -6,8 +6,9 @@ import { Role } from "../_components/role";
 import { NavBar } from "../_components/navbar";
 
 export default function RolesPage() {
-  const jobId = "4280628007"; // Hard-coded for now, can be dynamic based on your use case
-  const { data: job, error, isLoading } = api.item.getJobById.useQuery({ id: jobId });
+  const jobId = "4280628007"; // hard-coded for now
+
+  const { data: job, error, isLoading } = api.item.getJobById.useQuery<{ id: string; name: string }>({ id: jobId });
   const router = useRouter();
 
   if (isLoading) return <div>Loading...</div>;
@@ -19,7 +20,7 @@ export default function RolesPage() {
 
   return (
     <div className="w-full max-w-6xl mx-auto p-6">
-      <NavBar></NavBar>
+      <NavBar />
       <h1 className="text-2xl font-bold mb-4">Roles you are recruiting for:</h1>
       <div className="flex flex-wrap gap-4">
         {job ? (

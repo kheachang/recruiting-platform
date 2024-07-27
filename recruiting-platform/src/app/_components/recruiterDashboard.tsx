@@ -1,13 +1,26 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import { api } from "~/trpc/react";
 import { Tracker } from "./tracker";
 import { Candidate } from "./candidate";
-import { NavBar } from "./navbar";
 
 type RecruiterDashboardProps = {
   roleId: string;
   roleTitle: string;
 };
+
+interface Candidate {
+  id: string;
+  name: string;
+  applicationId: string;
+}
+
+interface TrackerData {
+  [key: string]: {
+    candidates: Candidate[];
+  };
+}
 
 const mapCandidatesToTracker = (candidates: any[]): { [key: string]: { candidates: { id: string; name: string; applicationId: string }[] } } => {
   const tracker: { [key: string]: { candidates: { id: string; name: string; applicationId: string }[] } } = {};
@@ -51,29 +64,31 @@ export function RecruiterDashboard({ roleId, roleTitle }: RecruiterDashboardProp
   }, [candidateData]);
 
   useEffect(() => {
-    if (jobStagesData) {
-      const stageNames = jobStagesData.map((stage: any) => stage.name);
+    if (Array.isArray(jobStagesData)) {
+      const stageNames = jobStagesData.map((stage) => stage.name);
       setStatuses(stageNames);
-
+  
       const newStageMap: { [key: string]: number } = {};
       const newStageIdMap: { [key: number]: string } = {};
-      jobStagesData.forEach((stage: any) => {
+      jobStagesData.forEach((stage) => {
         newStageMap[stage.name] = stage.id;
         newStageIdMap[stage.id] = stage.name;
       });
       setStageMap(newStageMap);
       setStageIdMap(newStageIdMap);
+    } else {
+      console.error("Expected jobStagesData to be an array, but it is not.");
     }
   }, [jobStagesData]);
-
-  const handleStatusChange = async (candidateId: string, newStatus: string) => {  
-    try {
-      let currentStatus: string | undefined;
-      let applicationId: string | undefined;
-      let candidateName: string | undefined;
   
+  const handleStatusChange = async (candidateId: string, newStatus: string) => {
+    try {
+      let currentStatus: string = "default status";
+      let applicationId: string = "default id";
+      let candidateName: string = "default candidate name";
+        
       Object.keys(trackerData).forEach(status => {
-        const candidate = trackerData[status]?.candidates.find(candidate => candidate.id === candidateId);
+        const candidate = trackerData[status]?.candidates.find(c => c.id === candidateId);
         if (candidate) {
           currentStatus = status;
           applicationId = candidate.applicationId;
@@ -86,20 +101,12 @@ export function RecruiterDashboard({ roleId, roleTitle }: RecruiterDashboardProp
       }
   
       const fromStageId = stageMap[currentStatus];
-      let toStageId: number;
-      let newStatusName: string;
-  
-      if (stageMap[newStatus]) {
-        toStageId = stageMap[newStatus];
-        newStatusName = newStatus;
-      } else {
-        throw new Error(`Invalid new status: ${newStatus}`);
-      }
+      const toStageId = stageMap[newStatus];
   
       if (fromStageId === undefined || toStageId === undefined) {
         throw new Error(`Could not find stage ID for current status ${currentStatus} or new status ${newStatus}`);
       }
-    
+  
       await moveCandidateMutation.mutateAsync({
         applicationId,
         fromStageId,
@@ -109,22 +116,24 @@ export function RecruiterDashboard({ roleId, roleTitle }: RecruiterDashboardProp
       setTrackerData(prevData => {
         const updatedData = { ...prevData };
   
-        if (updatedData[currentStatus]) {
+        if (currentStatus && updatedData[currentStatus]) {
           updatedData[currentStatus].candidates = updatedData[currentStatus].candidates.filter(c => c.id !== candidateId);
         }
   
-        if (!updatedData[newStatusName]) {
-          updatedData[newStatusName] = { candidates: [] };
+        if (newStatus) {
+          if (!updatedData[newStatus]) {
+            updatedData[newStatus] = { candidates: [] };
+          }
+  
+          if (!updatedData[newStatus].candidates.find(c => c.id === candidateId)) {
+            updatedData[newStatus].candidates.push({
+              id: candidateId,
+              name: candidateName,
+              applicationId,
+            });
+          }
         }
   
-        if (!updatedData[newStatusName].candidates.find(c => c.id === candidateId)) {
-          updatedData[newStatusName].candidates.push({ 
-            id: candidateId, 
-            name: candidateName,
-            applicationId 
-          });
-        }
-        
         return updatedData;
       });
     } catch (error) {
@@ -136,7 +145,8 @@ export function RecruiterDashboard({ roleId, roleTitle }: RecruiterDashboardProp
       }
     }
   };
-
+    
+  
   const renderCandidate = (candidate: { id: string; name: string; applicationId: string; }, status: string) => (
     <Candidate
       key={candidate.id}

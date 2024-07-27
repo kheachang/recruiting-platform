@@ -3,12 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "~/trpc/react";
 import { Role } from "./role";
-import { Tracker } from "./tracker";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { NavBar } from "./navbar";
 
-interface Application {
+interface Application {  // TODO: Remove these and use the type file
   id: string;
   jobs: { id: string; name: string }[];
   status: string;
@@ -116,10 +113,13 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
     const applicationsForJob = candidate?.applications.filter(app => 
       app.jobs.some(job => job.id === jobId)
     ) || [];
-    return applicationsForJob.reduce((mostRecent, app) => 
-      new Date(app.applied_at) > new Date(mostRecent?.applied_at) ? app : mostRecent, 
-      applicationsForJob[0]
-    );
+  
+    return applicationsForJob.reduce((mostRecent, app) => {
+      const appDate = app.applied_at ? new Date(app.applied_at) : new Date(0);
+      const mostRecentDate = mostRecent?.applied_at ? new Date(mostRecent.applied_at) : new Date(0);
+  
+      return appDate > mostRecentDate ? app : mostRecent;
+    }, applicationsForJob[0]);
   }, [candidate]);
 
   const canApplyToRole = useCallback((role: Job) => {
@@ -150,7 +150,7 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
               return (
                 <div key={role.id} className="mb-4">
                   <Role
-                    id={parseInt(role.id, 10)}
+                    id={role.id}
                     initialTitle={role.name}
                   />
                   {mostRecentApplication && mostRecentApplication.status === "rejected" && (

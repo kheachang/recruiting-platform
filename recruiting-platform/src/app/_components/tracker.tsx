@@ -9,7 +9,7 @@ type TrackerProps = {
   onStatusChange: (candidateId: string, newStatus: string) => Promise<void>;
 };
 
-export function Tracker({ statuses, renderItem, fetchItems, onStatusChange }: TrackerProps) {
+export function Tracker({ statuses, renderItem, fetchItems }: TrackerProps) {
   const [itemsByStatus, setItemsByStatus] = useState<{ [key: string]: { candidates: { id: string; name: string }[] } }>({});
 
   useEffect(() => {
@@ -38,7 +38,7 @@ export function Tracker({ statuses, renderItem, fetchItems, onStatusChange }: Tr
                 className="p-2 bg-white rounded shadow-sm cursor-pointer truncate"
               >
                 <div className="text-xs sm:text-sm md:text-base truncate">
-                  {renderItem(candidate, status)}
+                  {renderItem(candidate)}
                 </div>
               </div>
             ))}
