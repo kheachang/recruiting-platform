@@ -7,10 +7,11 @@ export interface Application {
     candidate_id: string;
   }
   
-  export interface Candidate {
+  export interface CandidateType {
     id: string;
     first_name: string;
     last_name: string;
+    name: string;
     company: string;
     title: string | null;
     created_at: string;
@@ -64,5 +65,11 @@ export interface Application {
     confidential: boolean;
     is_template: boolean;
     copied_from_id: string | null;
+  }
+  
+  export interface TrackerData {
+    [key: string]: {
+      candidates: CandidateType[];
+    };
   }
   

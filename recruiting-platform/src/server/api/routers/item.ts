@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import fetch from "node-fetch";
-import { Application, Candidate, Job } from "~/server/types"
+import { Application, CandidateType, Job } from "~/server/types"
 
 const makeGreenhouseRequest = async <T>(url: string): Promise<T> => {
   try {
@@ -45,7 +45,7 @@ export const itemsRouter = createTRPCRouter({
             const candidateUrl = `https://harvest.greenhouse.io/v1/candidates/${candidateId}`;
             
             try {
-              const candidateData = await makeGreenhouseRequest<Candidate>(candidateUrl);
+              const candidateData = await makeGreenhouseRequest<CandidateType>(candidateUrl);
               return {
                 ...application,
                 candidate_name: `${candidateData.first_name} ${candidateData.last_name}`,

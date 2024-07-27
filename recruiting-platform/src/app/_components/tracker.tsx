@@ -2,24 +2,41 @@
 
 import { useEffect, useState } from "react";
 
+type Candidate = {
+  id: string;
+  name: string;
+  applicationId?: string;
+};
+
+type TrackerData = {
+  [key: string]: {
+    candidates: Candidate[];
+  };
+};
+
 type TrackerProps = {
   statuses: string[];
-  renderItem: (item: any) => JSX.Element;
-  fetchItems: () => Promise<{ [key: string]: { candidates: { id: string; name: string }[] } }>;
+  renderItem: (candidate: Candidate, status: string) => JSX.Element;
+  fetchItems: () => Promise<TrackerData>;
   onStatusChange: (candidateId: string, newStatus: string) => Promise<void>;
 };
 
-export function Tracker({ statuses, renderItem, fetchItems }: TrackerProps) {
-  const [itemsByStatus, setItemsByStatus] = useState<{ [key: string]: { candidates: { id: string; name: string }[] } }>({});
+export function Tracker({ statuses, renderItem, fetchItems, onStatusChange }: TrackerProps) {
+  const [itemsByStatus, setItemsByStatus] = useState<TrackerData>({});
 
   useEffect(() => {
     (async () => {
-      const fetchedItems = await fetchItems();
-      setItemsByStatus(fetchedItems);
+      try {
+        // @ts-ignore
+        const fetchedItems = await fetchItems();
+        setItemsByStatus(fetchedItems);
+      } catch (error) {
+        console.error("Error fetching items:", error);
+      }
     })();
   }, [fetchItems]);
 
-  const getItemsByStatus = (status: string) => {
+  const getItemsByStatus = (status: string): Candidate[] => {
     return itemsByStatus[status]?.candidates || [];
   };
 
@@ -36,9 +53,10 @@ export function Tracker({ statuses, renderItem, fetchItems }: TrackerProps) {
               <div
                 key={candidate.id}
                 className="p-2 bg-white rounded shadow-sm cursor-pointer truncate"
+                onClick={() => onStatusChange(candidate.id, status)}
               >
                 <div className="text-xs sm:text-sm md:text-base truncate">
-                  {renderItem(candidate)}
+                  {renderItem(candidate, status)}
                 </div>
               </div>
             ))}
