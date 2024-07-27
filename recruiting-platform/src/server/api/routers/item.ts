@@ -30,14 +30,12 @@ export const itemsRouter = createTRPCRouter({
 
         console.log("API Response:", candidates);
 
-
         return candidates;
       } catch (error) {
         console.error(`Error fetching candidates: ${error.message}`);
         throw new Error(`Failed to fetch candidates: ${error.message}`);
       }
     }),
-
 
   getCandidateById: publicProcedure
     .input(z.object({ id: z.string() }))
@@ -114,44 +112,116 @@ export const itemsRouter = createTRPCRouter({
         throw new Error(`Failed to fetch job: ${error.message}`);
       }
     }),
-
-    submitApplication: publicProcedure
-      .input(
-        z.object({
-          jobId: z.string(),
-          candidateId: z.string(),
-        }),
-      )
-      .mutation(async ({ input }) => {
-        const { jobId, candidateId } = input;
-        const apiUrl = `https://harvest.greenhouse.io/v1/candidates/${candidateId}/applications`;
-  
-        const body: any = {
-          job_id: jobId,
-        };
-  
-        try {
-          const response = await fetch(apiUrl, {
-            method: "POST",
-            headers: {
-              Authorization: `Basic ${Buffer.from(`${process.env.GREENHOUSE_API_KEY}:`).toString("base64")}`,
-              "Content-Type": "application/json",
-              "On-Behalf-Of": "4408810007",
-            },
-            body: JSON.stringify(body),
-          });
-  
-          if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(
-              `Failed to submit application: ${response.status} ${response.statusText} - ${errorText}`,
-            );
-          }
-  
-          const data = await response.json();
-          return data;
-        } catch (error) {
-          throw new Error(`Failed to submit application: ${error.message}`);
-        }
+  submitApplication: publicProcedure
+    .input(
+      z.object({
+        jobId: z.string(),
+        candidateId: z.string(),
       }),
-  });
+    )
+    .mutation(async ({ input }) => {
+      const { jobId, candidateId } = input;
+      const apiUrl = `https://harvest.greenhouse.io/v1/candidates/${candidateId}/applications`;
+
+      const body: any = {
+        job_id: jobId,
+      };
+
+      try {
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          headers: {
+            Authorization: `Basic ${Buffer.from(`${process.env.GREENHOUSE_API_KEY}:`).toString("base64")}`,
+            "Content-Type": "application/json",
+            "On-Behalf-Of": "4408810007",
+          },
+          body: JSON.stringify(body),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(
+            `Failed to submit application: ${response.status} ${response.statusText} - ${errorText}`,
+          );
+        }
+
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        throw new Error(`Failed to submit application: ${error.message}`);
+      }
+    }),
+
+    moveCandidate: publicProcedure
+    .input(
+      z.object({
+        applicationId: z.string(),
+        fromStageId: z.number(),
+        toStageId: z.number(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const { applicationId, fromStageId, toStageId } = input;
+      const apiUrl = `https://harvest.greenhouse.io/v1/applications/${applicationId}/move`;
+  
+      const body = {
+        from_stage_id: fromStageId,
+        to_stage_id: toStageId,
+      };
+  
+      try {
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          headers: {
+            Authorization: `Basic ${Buffer.from(`${process.env.GREENHOUSE_API_KEY}:`).toString("base64")}`,
+            "Content-Type": "application/json",
+            "On-Behalf-Of": "4408810007",
+          },
+          body: JSON.stringify(body),
+        });
+  
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(
+            `Failed to move application: ${response.status} ${response.statusText} - ${errorText}`,
+          );
+        }
+  
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        throw new Error(`Failed to move application: ${error.message}`);
+      }
+    }),
+  
+  getJobStagesByJobId: publicProcedure
+    .input(z.object({ jobId: z.string() }))
+    .query(async ({ input }) => {
+      const { jobId } = input;
+      const apiUrl = `https://harvest.greenhouse.io/v1/jobs/${jobId}/stages`;
+
+      try {
+        const response = await fetch(apiUrl, {
+          method: "GET",
+          headers: {
+            Authorization: `Basic ${Buffer.from(`${process.env.GREENHOUSE_API_KEY}:`).toString("base64")}`,
+            "Content-Type": "application/json",
+            "On-Behalf-Of": "4408810007",
+          },
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(
+            `Failed to fetch job stages: ${response.status} ${response.statusText} - ${errorText}`,
+          );
+        }
+
+        const stages = await response.json();
+        return stages;
+      } catch (error) {
+        console.error(`Error fetching job stages: ${error.message}`);
+        throw new Error(`Failed to fetch job stages: ${error.message}`);
+      }
+    }),
+});
