@@ -5,12 +5,18 @@ const config = {
     "project": true
   },
   "plugins": [
-    "@typescript-eslint"
+    "@typescript-eslint",
+    "react",
+    "react-hooks",
+    "next"
   ],
   "extends": [
     "next/core-web-vitals",
     "plugin:@typescript-eslint/recommended-type-checked",
-    "plugin:@typescript-eslint/stylistic-type-checked"
+    "plugin:@typescript-eslint/stylistic-type-checked",
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended",
+    "plugin:next/recommended"
   ],
   "rules": {
     "@typescript-eslint/array-type": "off",
@@ -36,7 +42,11 @@ const config = {
           "attributes": false
         }
       }
-    ]
+    ],
+    "react/no-unescaped-entities": "off",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
+    "@next/next/no-page-custom-font": "off"
   }
 }
 module.exports = config;
