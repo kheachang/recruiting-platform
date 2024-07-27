@@ -12,9 +12,7 @@ import { candidateRouter } from "./routers/candidate";
  */
 export const appRouter = createTRPCRouter({
   post: postRouter,
-  role: roleRouter,
   item: itemsRouter,
-  candidate: candidateRouter
 });
 
 // export type definition of API
