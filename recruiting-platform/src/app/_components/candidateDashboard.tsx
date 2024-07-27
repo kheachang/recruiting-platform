@@ -17,20 +17,20 @@ interface Candidate {
   first_name: string;
   last_name: string;
   company: string;
-  title?: string;
+  title: string | null;
   created_at: string;
   updated_at: string;
   last_activity: string;
   is_private: boolean;
-  photo_url?: string;
+  photo_url: string | null;
   attachments: any[];
   phone_numbers: { value: string; type: string }[];
   addresses: { value: string; type: string }[];
   email_addresses: { value: string; type: string }[];
   website_addresses: { value: string; type: string }[];
   social_media_addresses: { value: string }[];
-  recruiter?: any;
-  coordinator?: any;
+  recruiter: any;
+  coordinator: any;
   can_email: boolean;
   tags: string[];
   applications: Application[];
@@ -45,8 +45,30 @@ interface Job {
   requisition_id: string;
   status: string;
   departments: { id: string; name: string }[];
-  offices: { id: string; name: string }[];
-  custom_fields: { salary_range: { min_value: string; max_value: string; unit: string } };
+  offices: { id: string; name: string; location?: { name: string } }[];
+  hiring_team: {
+    hiring_managers: any[];
+    recruiters: any[];
+    coordinators: any[];
+    sourcers: any[];
+  };
+  openings: { id: string; opening_id: string; status: string; opened_at: string; closed_at: string | null; application_id: string | null; close_reason: string | null }[];
+  custom_fields: {
+    employment_type: string | null;
+    salary_range: { min_value: string; max_value: string; unit: string };
+  };
+  keyed_custom_fields: {
+    employment_type: { name: string; type: string; value: string | null };
+    salary_range: { name: string; type: string; value: { min_value: string; max_value: string; unit: string } };
+  };
+  created_at: string;
+  opened_at: string;
+  closed_at: string | null;
+  updated_at: string;
+  notes: string | null;
+  confidential: boolean;
+  is_template: boolean;
+  copied_from_id: string | null;
 }
 
 export function CandidateDashboard({ candidateId }: { candidateId: string }) {
@@ -84,18 +106,33 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
 
   const unAppliedRoles = roles.filter(role => {
     const mostRecentApplication = getMostRecentApplication(role.id);
-    return !mostRecentApplication || !mostRecentApplication.current_stage.name;
+    return !mostRecentApplication || mostRecentApplication.status === "rejected";
+  });
+
+  const trackerRoles = roles.filter(role => {
+    const mostRecentApplication = getMostRecentApplication(role.id);
+    return mostRecentApplication && mostRecentApplication.status !== "rejected";
   });
 
   const fetchItems = async () => {
-    return roles.map(role => {
+    return trackerRoles.map(role => {
       const mostRecentApplication = getMostRecentApplication(role.id);
       return {
         id: role.id,
         roleStatuses: mostRecentApplication ? [{
           roleId: role.id,
           status: mostRecentApplication.current_stage.name,
-        }] : []
+        }] : [],
+        metadata: {
+          notes: role.notes,
+          confidential: role.confidential,
+          status: role.status,
+          departments: role.departments,
+          offices: role.offices,
+          hiring_team: role.hiring_team,
+          openings: role.openings,
+          custom_fields: role.custom_fields,
+        }
       };
     });
   };
@@ -176,7 +213,6 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
         </div>
       </section>
 
-
       <section>
         <h3 className="text-2xl font-semibold mb-4">Submit Application To:</h3>
         <div className="grid grid-cols-1 gap-4">
@@ -188,7 +224,10 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
                   initialTitle={role.name}
                 />
                 <Link
-                  href={`/apply/${role.id}`}
+                  href={{
+                    pathname: `/apply/${role.id}`,
+                    query: { jobData: JSON.stringify(role) }
+                  }}
                   className="btn mt-3"
                 >
                   Apply for this Role
@@ -200,12 +239,13 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
           )}
         </div>
       </section>
+
       <section className="mb-10">
         <h3 className="text-2xl font-semibold mb-4">Track Your Applications:</h3>
-        <p>Drag and drop your applications as they progress through the stages.</p>
+        <p>Your tracker will update when there's progress on your application.</p>
         <div className="grid grid-cols-1 gap-4">
           <Tracker
-            statuses={["Applied", "Application Review", "Offer", "Rejected"]}
+            statuses={["Applied", "Application Review", "Offer"]}
             renderItem={(item) => (
               <Role
                 key={item.id}
