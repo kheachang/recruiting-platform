@@ -33,7 +33,6 @@ const mapCandidatesToTracker = (candidates: any[]): { [key: string]: { candidate
   return tracker;
 };
 
-
 export function RecruiterDashboard({ roleId, roleTitle }: RecruiterDashboardProps) {
   const [trackerData, setTrackerData] = useState<{ [key: string]: { candidates: { id: string; name: string; applicationId: string }[] } }>({});
   const [statuses, setStatuses] = useState<string[]>([]);
@@ -75,16 +74,18 @@ export function RecruiterDashboard({ roleId, roleTitle }: RecruiterDashboardProp
     try {
       let currentStatus: string | undefined;
       let applicationId: string | undefined;
+      let candidateName: string | undefined;
 
       Object.keys(trackerData).forEach(status => {
         const candidate = trackerData[status]?.candidates.find(candidate => candidate.id === candidateId);
         if (candidate) {
           currentStatus = status;
           applicationId = candidate.applicationId;
+          candidateName = candidate.name;
         }
       });
 
-      if (!currentStatus || !applicationId) {
+      if (!currentStatus || !applicationId || !candidateName) {
         throw new Error(`Candidate with ID ${candidateId} not found in any status.`);
       }
 
@@ -115,16 +116,15 @@ export function RecruiterDashboard({ roleId, roleTitle }: RecruiterDashboardProp
         const updatedData = { ...prevData };
         updatedData[currentStatus].candidates = updatedData[currentStatus].candidates.filter(c => c.id !== candidateId);
         
-        if (newStatusName !== 'Rejected') {
-          if (!updatedData[newStatusName]) {
-            updatedData[newStatusName] = { candidates: [] };
-          }
-          updatedData[newStatusName].candidates.push({ 
-            id: candidateId, 
-            name: prevData[currentStatus].candidates.find(c => c.id === candidateId)?.name || 'Unknown', 
-            applicationId 
-          });
+        if (!updatedData[newStatusName]) {
+          updatedData[newStatusName] = { candidates: [] };
         }
+        updatedData[newStatusName].candidates.push({ 
+          id: candidateId, 
+          name: candidateName,
+          applicationId 
+        });
+        
         return updatedData;
       });
     } catch (error) {
@@ -147,6 +147,7 @@ export function RecruiterDashboard({ roleId, roleTitle }: RecruiterDashboardProp
       onStatusChange={handleStatusChange}
     />
   );
+  
   if (candidateLoading || jobStagesLoading) return <div>Loading...</div>;
   if (candidateError) return <div>Error fetching candidates: {candidateError.message}</div>;
   if (jobStagesError) return <div>Error fetching job stages: {jobStagesError.message}</div>;

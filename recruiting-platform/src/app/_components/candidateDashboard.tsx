@@ -149,6 +149,7 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
       
       <section>
         <h3 className="text-2xl font-semibold mb-4">Submit Application To:</h3>
+        <p className="mb-4">Your recruiter has invited you to apply to these roles:</p>
         <div className="grid grid-cols-1 gap-4">
           {applyableRoles.length > 0 ? (
             applyableRoles.map(role => {
