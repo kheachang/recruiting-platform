@@ -106,12 +106,12 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
 
   useEffect(() => {
     if (jobData) {
-      setRoles([jobData]);
+      setRoles(Array.isArray(jobData) ? jobData : [jobData]);
     } else if (jobError) {
       console.error("Error fetching job:", jobError);
     }
   }, [jobData, jobError]);
-
+  
   const getMostRecentApplication = useCallback((jobId: string) => {
     const applicationsForJob = candidate?.applications.filter(app => 
       app.jobs.some(job => job.id === jobId)
@@ -127,7 +127,7 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
     return !mostRecentApplication || (mostRecentApplication.status !== "active" && mostRecentApplication.status !== "in_progress");
   }, [getMostRecentApplication]);
 
-  const applyableRoles = roles.filter(canApplyToRole);
+  const applyableRoles = Array.isArray(roles) ? roles.filter(canApplyToRole) : [];
 
   if (candidateLoading || jobLoading) {
     return <div>Loading...</div>;
