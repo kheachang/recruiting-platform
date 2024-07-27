@@ -14,7 +14,6 @@ export default function RoleDetailPage() {
 
   if (!job) return <div>Job not found</div>;
 
-  console.log(job)
   return (
     <div className="w-full max-w-6xl mx-auto p-6">
       <NavBar></NavBar>

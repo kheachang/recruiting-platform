@@ -98,8 +98,7 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
 
   useEffect(() => {
     if (candidateData) {
-      console.log("Candidate data:", candidateData);
-      setCandidate(candidateData);
+      setCandidate(candidateData as Candidate);
     } else if (candidateError) {
       console.error("Error fetching candidate:", candidateError);
     }
@@ -107,7 +106,6 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
 
   useEffect(() => {
     if (jobData) {
-      console.log("Job data:", jobData);
       setRoles([jobData]);
     } else if (jobError) {
       console.error("Error fetching job:", jobError);
@@ -115,11 +113,9 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
   }, [jobData, jobError]);
 
   const getMostRecentApplication = useCallback((jobId: string) => {
-    console.log("Checking applications for job ID:", jobId);
     const applicationsForJob = candidate?.applications.filter(app => 
       app.jobs.some(job => job.id === jobId)
     ) || [];
-    console.log("Applications for this job:", applicationsForJob);
     return applicationsForJob.reduce((mostRecent, app) => 
       new Date(app.applied_at) > new Date(mostRecent?.applied_at) ? app : mostRecent, 
       applicationsForJob[0]
@@ -128,13 +124,10 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
 
   const canApplyToRole = useCallback((role: Job) => {
     const mostRecentApplication = getMostRecentApplication(role.id);
-    console.log("Most recent application for role", role.id, ":", mostRecentApplication);
     return !mostRecentApplication || (mostRecentApplication.status !== "active" && mostRecentApplication.status !== "in_progress");
   }, [getMostRecentApplication]);
 
   const applyableRoles = roles.filter(canApplyToRole);
-
-  console.log("Applyable roles:", applyableRoles);
 
   if (candidateLoading || jobLoading) {
     return <div>Loading...</div>;

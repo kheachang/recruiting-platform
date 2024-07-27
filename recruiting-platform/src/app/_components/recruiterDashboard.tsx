@@ -66,12 +66,7 @@ export function RecruiterDashboard({ roleId, roleTitle }: RecruiterDashboardProp
     }
   }, [jobStagesData]);
 
-  const handleStatusChange = async (candidateId: string, newStatus: string) => {
-    console.log('handleStatusChange called with:', { candidateId, newStatus });
-    console.log('Current trackerData:', trackerData);
-    console.log('Current stageMap:', stageMap);
-    console.log('Current stageIdMap:', stageIdMap);
-  
+  const handleStatusChange = async (candidateId: string, newStatus: string) => {  
     try {
       let currentStatus: string | undefined;
       let applicationId: string | undefined;
@@ -104,9 +99,7 @@ export function RecruiterDashboard({ roleId, roleTitle }: RecruiterDashboardProp
       if (fromStageId === undefined || toStageId === undefined) {
         throw new Error(`Could not find stage ID for current status ${currentStatus} or new status ${newStatus}`);
       }
-  
-      console.log('Moving candidate:', { applicationId, fromStageId, toStageId });
-  
+    
       await moveCandidateMutation.mutateAsync({
         applicationId,
         fromStageId,
