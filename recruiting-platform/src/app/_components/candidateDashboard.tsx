@@ -245,7 +245,7 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
         <p>Your tracker will update when there's progress on your application.</p>
         <div className="grid grid-cols-1 gap-4">
           <Tracker
-            statuses={["Applied", "Application Review", "Offer"]}
+            statuses={["Application Review", "Phone Screen", "Preliminary Phone Screen", "Deep dive", "Rejected"]}
             renderItem={(item) => (
               <Role
                 key={item.id}

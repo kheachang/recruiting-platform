@@ -1,26 +1,25 @@
 "use client";
 
-import { RecruiterDashboard } from "~/app/_components/recruiterDashboard"
+import { RecruiterDashboard } from "~/app/_components/recruiterDashboard";
 import { api } from "~/trpc/react";
 
-export default function RoleDetailPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function RoleDetailPage() {
+  const jobId = "4280628007"; // hard code job ID for now
 
-  const { data: roles, error, isLoading } = api.role.getAll.useQuery(); 
-  
+  const { data: job, error, isLoading } = api.item.getJobById.useQuery({ id: jobId });
+
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
-  
-  const currentRole = roles.find((role) => role.id.toString() === id);
-  if (!currentRole) return <div>Role not found</div>;
 
+  if (!job) return <div>Job not found</div>;
+
+  console.log(job)
   return (
     <div className="w-full max-w-6xl mx-auto p-6">
       <RecruiterDashboard
-        roleId={id}
-        roleTitle={currentRole.title}
-        roleCompany={currentRole.company}
+        roleId={job.id.toString()}  // convert job id to string
+        roleTitle={job.name}
       />
     </div>
-  )
+  );
 }

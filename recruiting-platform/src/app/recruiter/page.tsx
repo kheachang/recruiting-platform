@@ -4,14 +4,13 @@ import { useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
 import { Role } from "../_components/role";
 
-
 export default function RolesPage() {
-  const jobId = "4280628007"; // hard coding this for now assuming 1 job
-  const { data: job, error: jobError, isLoading: jobLoading } = api.item.getJobById.useQuery({ id: jobId });
+  const jobId = "4280628007"; // Hard-coded for now, can be dynamic based on your use case
+  const { data: job, error, isLoading } = api.item.getJobById.useQuery({ id: jobId });
   const router = useRouter();
 
-  if (jobLoading) return <div>Loading...</div>;
-  if (jobError) return <div>Error: {jobError.message}</div>;
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
 
   const handleRoleClick = (id: string) => {
     router.push(`/role/${id}`);

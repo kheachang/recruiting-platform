@@ -19,10 +19,6 @@ const roles: Role[] = [
 ];
 
 export const roleRouter = createTRPCRouter({
-  //   getApplied: publicProcedure.query(() => {
-  //     return roles.filter(role => role.status === "applied");
-  //   }),
-
   getAll: publicProcedure.query(() => {
     return roles;
   }),

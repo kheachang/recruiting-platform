@@ -5,23 +5,21 @@ import { useEffect, useState } from "react";
 type TrackerProps = {
   statuses: string[];
   renderItem: (item: any) => JSX.Element;
-  fetchItems: () => Promise<any[]>;
+  fetchItems: () => Promise<{ [key: string]: { candidates: { id: string; name: string }[] } }>;
 };
 
 export function Tracker({ statuses, renderItem, fetchItems }: TrackerProps) {
-  const [items, setItems] = useState<any[]>([]);
+  const [itemsByStatus, setItemsByStatus] = useState<{ [key: string]: { candidates: { id: string; name: string }[] } }>({});
 
   useEffect(() => {
     (async () => {
       const fetchedItems = await fetchItems();
-      setItems(fetchedItems);
+      setItemsByStatus(fetchedItems);
     })();
   }, [fetchItems]);
 
   const getItemsByStatus = (status: string) => {
-    return items.filter(item =>
-      item.roleStatuses.some(roleStatuses => roleStatuses.status === status)
-    );
+    return itemsByStatus[status]?.candidates || [];
   };
 
   return (
@@ -33,13 +31,13 @@ export function Tracker({ statuses, renderItem, fetchItems }: TrackerProps) {
         >
           <h3 className="text-sm font-semibold mb-2 truncate">{status}</h3>
           <div className="space-y-2">
-            {getItemsByStatus(status).map(item => (
+            {getItemsByStatus(status).map(candidate => (
               <div
-                key={item.id}
+                key={candidate.id}
                 className="p-2 bg-white rounded shadow-sm cursor-pointer truncate"
               >
                 <div className="text-xs sm:text-sm md:text-base truncate">
-                  {renderItem(item)}
+                  {renderItem(candidate)}
                 </div>
               </div>
             ))}

@@ -2,34 +2,42 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import fetch from "node-fetch";
 
-interface Candidate {
-  id: string;
-  name: string;
-  status: string;
-  roleStatuses: { roleId: string; status: string }[]; // Track roles and their statuses
-}
-
-interface Role {
-  id: string;
-  name: string;
-  company: string;
-}
-
-
 export const itemsRouter = createTRPCRouter({
-  getAllCandidates: publicProcedure.query(() => {
-    return candidates;
-  }),
-
   getCandidatesByRoleId: publicProcedure
     .input(z.object({ roleId: z.string() }))
-    .query(({ input }) => {
-      return candidates.filter((candidate) =>
-        candidate.roleStatuses.some(
-          (roleStatus) => roleStatus.roleId === input.roleId,
-        ),
-      );
+    .query(async ({ input }) => {
+      const { roleId } = input;
+      const apiUrl = `https://harvest.greenhouse.io/v1/applications?job_id=${roleId}`;
+
+      try {
+        const response = await fetch(apiUrl, {
+          method: "GET",
+          headers: {
+            Authorization: `Basic ${Buffer.from(`${process.env.GREENHOUSE_API_KEY}:`).toString("base64")}`,
+            "Content-Type": "application/json",
+            "On-Behalf-Of": "4408810007",
+          },
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(
+            `Failed to fetch applications: ${response.status} ${response.statusText} - ${errorText}`,
+          );
+        }
+
+        const candidates = await response.json();
+
+        console.log("API Response:", candidates);
+
+
+        return candidates;
+      } catch (error) {
+        console.error(`Error fetching candidates: ${error.message}`);
+        throw new Error(`Failed to fetch candidates: ${error.message}`);
+      }
     }),
+
 
   getCandidateById: publicProcedure
     .input(z.object({ id: z.string() }))
@@ -53,7 +61,7 @@ export const itemsRouter = createTRPCRouter({
         console.log(`Response status: ${response.status}`);
 
         if (!response.ok) {
-          const errorText = await response.text(); // Read the error text for debugging
+          const errorText = await response.text();
           console.error(`Error response text: ${errorText}`);
           throw new Error(
             `Failed to fetch candidate: ${response.status} ${response.statusText} - ${errorText}`,
@@ -68,9 +76,6 @@ export const itemsRouter = createTRPCRouter({
         throw new Error(`Failed to fetch candidate: ${error.message}`);
       }
     }),
-  getAllRoles: publicProcedure.query(() => {
-    return roles;
-  }),
 
   updateCandidateRoleStatus: publicProcedure
     .input(
