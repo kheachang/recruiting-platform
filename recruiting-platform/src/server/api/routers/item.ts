@@ -54,7 +54,7 @@ export const itemsRouter = createTRPCRouter({
           headers: {
             Authorization: `Basic ${Buffer.from(`${process.env.GREENHOUSE_API_KEY}:`).toString("base64")}`,
             "Content-Type": "application/json",
-            "On-Behalf-Of": "4408810007", // Replace with the actual Greenhouse user ID
+            "On-Behalf-Of": "4408810007",
           },
         });
 
@@ -75,33 +75,6 @@ export const itemsRouter = createTRPCRouter({
         console.error(`Error fetching candidate: ${error.message}`);
         throw new Error(`Failed to fetch candidate: ${error.message}`);
       }
-    }),
-
-  updateCandidateRoleStatus: publicProcedure
-    .input(
-      z.object({
-        candidateId: z.string(),
-        roleId: z.string(),
-        status: z.string(),
-      }),
-    )
-    .mutation(({ input }) => {
-      const candidate = candidates.find((c) => c.id === input.candidateId);
-      if (candidate) {
-        const roleStatus = candidate.roleStatuses.find(
-          (rs) => rs.roleId === input.roleId,
-        );
-        if (roleStatus) {
-          roleStatus.status = input.status;
-        } else {
-          candidate.roleStatuses.push({
-            roleId: input.roleId,
-            status: input.status,
-          });
-        }
-        return candidate;
-      }
-      throw new Error("Candidate not found");
     }),
 
   getJobById: publicProcedure
@@ -142,60 +115,43 @@ export const itemsRouter = createTRPCRouter({
       }
     }),
 
-  submitApplication: publicProcedure
-    .input(
-      z.object({
-        jobId: z.string(),
-        candidateId: z.string(),
-        resume: z
-          .object({
-            fileName: z.string(),
-            content: z.string(),
-            contentType: z.string(),
-          })
-          .optional(),
-      }),
-    )
-    .mutation(async ({ input }) => {
-      const { jobId, candidateId, resume } = input;
-      const apiUrl = `https://harvest.greenhouse.io/v1/candidates/${candidateId}/applications`;
-
-      const body: any = {
-        job_id: jobId,
-        attachments: resume
-          ? [
-              {
-                filename: resume.fileName,
-                type: "resume",
-                content: resume.content,
-                content_type: resume.contentType,
-              },
-            ]
-          : [],
-      };
-
-      try {
-        const response = await fetch(apiUrl, {
-          method: "POST",
-          headers: {
-            Authorization: `Basic ${Buffer.from(`${process.env.GREENHOUSE_API_KEY}:`).toString("base64")}`,
-            "Content-Type": "application/json",
-            "On-Behalf-Of": "4408810007",
-          },
-          body: JSON.stringify(body),
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(
-            `Failed to submit application: ${response.status} ${response.statusText} - ${errorText}`,
-          );
+    submitApplication: publicProcedure
+      .input(
+        z.object({
+          jobId: z.string(),
+          candidateId: z.string(),
+        }),
+      )
+      .mutation(async ({ input }) => {
+        const { jobId, candidateId } = input;
+        const apiUrl = `https://harvest.greenhouse.io/v1/candidates/${candidateId}/applications`;
+  
+        const body: any = {
+          job_id: jobId,
+        };
+  
+        try {
+          const response = await fetch(apiUrl, {
+            method: "POST",
+            headers: {
+              Authorization: `Basic ${Buffer.from(`${process.env.GREENHOUSE_API_KEY}:`).toString("base64")}`,
+              "Content-Type": "application/json",
+              "On-Behalf-Of": "4408810007",
+            },
+            body: JSON.stringify(body),
+          });
+  
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(
+              `Failed to submit application: ${response.status} ${response.statusText} - ${errorText}`,
+            );
+          }
+  
+          const data = await response.json();
+          return data;
+        } catch (error) {
+          throw new Error(`Failed to submit application: ${error.message}`);
         }
-
-        const data = await response.json();
-        return data;
-      } catch (error) {
-        throw new Error(`Failed to submit application: ${error.message}`);
-      }
-    }),
-});
+      }),
+  });

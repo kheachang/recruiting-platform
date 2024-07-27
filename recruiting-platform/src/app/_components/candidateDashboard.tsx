@@ -106,36 +106,9 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
 
   const unAppliedRoles = roles.filter(role => {
     const mostRecentApplication = getMostRecentApplication(role.id);
-    return !mostRecentApplication || mostRecentApplication.status === "rejected";
+    return !mostRecentApplication || mostRecentApplication.status === null;
   });
 
-  const trackerRoles = roles.filter(role => {
-    const mostRecentApplication = getMostRecentApplication(role.id);
-    return mostRecentApplication && mostRecentApplication.status !== "rejected";
-  });
-
-  const fetchItems = async () => {
-    return trackerRoles.map(role => {
-      const mostRecentApplication = getMostRecentApplication(role.id);
-      return {
-        id: role.id,
-        roleStatuses: mostRecentApplication ? [{
-          roleId: role.id,
-          status: mostRecentApplication.current_stage.name,
-        }] : [],
-        metadata: {
-          notes: role.notes,
-          confidential: role.confidential,
-          status: role.status,
-          departments: role.departments,
-          offices: role.offices,
-          hiring_team: role.hiring_team,
-          openings: role.openings,
-          custom_fields: role.custom_fields,
-        }
-      };
-    });
-  };
 
   if (getCandidate.isLoading || getJob.isLoading) {
     return <div>Loading...</div>;
@@ -240,23 +213,6 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
         </div>
       </section>
 
-      <section className="mb-10">
-        <h3 className="text-2xl font-semibold mb-4">Track Your Applications:</h3>
-        <p>Your tracker will update when there's progress on your application.</p>
-        <div className="grid grid-cols-1 gap-4">
-          <Tracker
-            statuses={["Application Review", "Phone Screen", "Preliminary Phone Screen", "Deep dive", "Rejected"]}
-            renderItem={(item) => (
-              <Role
-                key={item.id}
-                id={parseInt(item.id, 10)}
-                initialTitle={roles.find(role => role.id === item.id)?.name || "Unknown"}
-              />
-            )}
-            fetchItems={fetchItems}
-          />
-        </div>
-      </section>
     </div>
   );
 }

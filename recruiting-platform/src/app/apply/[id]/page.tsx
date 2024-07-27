@@ -23,12 +23,10 @@ export default function ApplicationForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (job) {
       submitApplication.mutate({
-        jobId: job.id,
+        jobId: "4280628007",
         candidateId: "8044241007",
-        resume: resume
       });
     }
   };
@@ -52,16 +50,6 @@ export default function ApplicationForm() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <label className="form-control w-full max-w-xs">
-          <div className="label">
-            <span className="label-text">Upload Resume</span>
-          </div>
-          <input
-            type="file"
-            className="file-input file-input-bordered w-full max-w-xs"
-            onChange={(e) => setResume(e.target.files ? e.target.files[0] : null)}
-          />
-        </label>
         <button className="btn">Submit</button>
       </form>
     </div>
