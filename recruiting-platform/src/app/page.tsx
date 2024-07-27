@@ -1,8 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { api } from "~/trpc/react";
-import { useState } from "react";
+import { NavBar } from "./_components/navbar";
 
 export default function Home() {
   const router = useRouter();
@@ -12,6 +11,7 @@ export default function Home() {
 
   return (
     <div className="w-full max-w-6xl mx-auto p-6">
+      <NavBar></NavBar>
       <h1 className="text-3xl font-bold mb-6">Welcome to your recruiting platform!</h1>
       <p className="mb-7">Whether you are here to explore job opportunities or manage recruitment processes, select your role below to get started:</p>
       <div className="flex justify-center gap-4 mb-6">

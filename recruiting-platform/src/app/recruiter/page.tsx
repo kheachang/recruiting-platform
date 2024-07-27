@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
 import { Role } from "../_components/role";
+import { NavBar } from "../_components/navbar";
 
 export default function RolesPage() {
   const jobId = "4280628007"; // Hard-coded for now, can be dynamic based on your use case
@@ -18,6 +19,7 @@ export default function RolesPage() {
 
   return (
     <div className="w-full max-w-6xl mx-auto p-6">
+      <NavBar></NavBar>
       <h1 className="text-2xl font-bold mb-4">Roles you are recruiting for:</h1>
       <div className="flex flex-wrap gap-4">
         {job ? (

@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
+import { NavBar } from "~/app/_components/navbar";
 import { api } from "~/trpc/react";
 
 const formatDate = (dateString: string | null) => {
@@ -75,6 +76,7 @@ export default function ApplicationForm() {
   
   return (
     <div className="max-w-6xl mx-auto p-6">
+      <NavBar></NavBar>
       <h1 className="text-3xl font-bold mb-6">Apply for Role</h1>
       {alert && (
         <div className={`p-4 mb-4 rounded-md ${alert.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>

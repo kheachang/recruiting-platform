@@ -1,5 +1,6 @@
 "use client";
 
+import { NavBar } from "~/app/_components/navbar";
 import { RecruiterDashboard } from "~/app/_components/recruiterDashboard";
 import { api } from "~/trpc/react";
 
@@ -16,6 +17,7 @@ export default function RoleDetailPage() {
   console.log(job)
   return (
     <div className="w-full max-w-6xl mx-auto p-6">
+      <NavBar></NavBar>
       <RecruiterDashboard
         roleId={job.id.toString()}  // convert job id to string
         roleTitle={job.name}

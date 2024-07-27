@@ -6,6 +6,7 @@ import { Role } from "./role";
 import { Tracker } from "./tracker";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { NavBar } from "./navbar";
 
 interface Application {
   id: string;
@@ -146,7 +147,6 @@ export function CandidateDashboard({ candidateId }: { candidateId: string }) {
   return (
     <div className="w-full max-w-6xl mx-auto p-6">
       <h2 className="text-3xl font-bold mb-6">Candidate Dashboard for {candidate?.first_name} {candidate?.last_name}</h2>
-      
       <section>
         <h3 className="text-2xl font-semibold mb-4">Submit Application To:</h3>
         <p className="mb-4">Your recruiter has invited you to apply to these roles:</p>

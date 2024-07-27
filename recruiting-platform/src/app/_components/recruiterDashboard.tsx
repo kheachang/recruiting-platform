@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { api } from "~/trpc/react";
 import { Tracker } from "./tracker";
 import { Candidate } from "./candidate";
+import { NavBar } from "./navbar";
 
 type RecruiterDashboardProps = {
   roleId: string;
