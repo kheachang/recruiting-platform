@@ -12,20 +12,22 @@ const mapCandidatesToTracker = (candidates: any[]): { [key: string]: { candidate
   const tracker: { [key: string]: { candidates: { id: string; name: string; applicationId: string }[] } } = {};
 
   candidates.forEach((application: any) => {
-    const candidateId = application.candidate_id.toString();
-    const applicationId = application.id.toString();
-    const currentStatus = application.current_stage?.name || 'Unknown';
-    const name = application.candidate_name || `Candidate ${candidateId}`;
+    if (application.status === 'active') {
+      const candidateId = application.candidate_id.toString();
+      const applicationId = application.id.toString();
+      const currentStatus = application.current_stage?.name || 'Unknown';
+      const name = application.candidate_name || `Candidate ${candidateId}`;
 
-    if (!tracker[currentStatus]) {
-      tracker[currentStatus] = { candidates: [] };
+      if (!tracker[currentStatus]) {
+        tracker[currentStatus] = { candidates: [] };
+      }
+      
+      tracker[currentStatus].candidates.push({
+        id: candidateId,
+        name: name,
+        applicationId: applicationId
+      });
     }
-    
-    tracker[currentStatus].candidates.push({
-      id: candidateId,
-      name: name,
-      applicationId: applicationId
-    });
   });
 
   return tracker;
@@ -112,13 +114,19 @@ export function RecruiterDashboard({ roleId, roleTitle }: RecruiterDashboardProp
       setTrackerData(prevData => {
         const updatedData = { ...prevData };
         updatedData[currentStatus].candidates = updatedData[currentStatus].candidates.filter(c => c.id !== candidateId);
-        if (!updatedData[newStatusName]) {
-          updatedData[newStatusName] = { candidates: [] };
+        
+        if (newStatusName !== 'Rejected') {
+          if (!updatedData[newStatusName]) {
+            updatedData[newStatusName] = { candidates: [] };
+          }
+          updatedData[newStatusName].candidates.push({ 
+            id: candidateId, 
+            name: prevData[currentStatus].candidates.find(c => c.id === candidateId)?.name || 'Unknown', 
+            applicationId 
+          });
         }
-        updatedData[newStatusName].candidates.push({ id: candidateId, name: prevData[currentStatus].candidates.find(c => c.id === candidateId)?.name || 'Unknown', applicationId });
         return updatedData;
       });
-
     } catch (error) {
       console.error('Error in handleStatusChange:', error);
       if (error instanceof Error) {
