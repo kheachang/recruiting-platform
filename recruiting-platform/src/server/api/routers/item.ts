@@ -102,21 +102,32 @@ export const itemsRouter = createTRPCRouter({
       }
     }),
 
-  submitApplication: publicProcedure
+    submitApplication: publicProcedure
     .input(
       z.object({
         jobId: z.string(),
         candidateId: z.string(),
+        resume: z.object({
+          filename: z.string(),
+          content: z.string(),
+          content_type: z.string()
+        })
       }),
     )
     .mutation(async ({ input }) => {
-      const { jobId, candidateId } = input;
+      const { jobId, candidateId, resume } = input;
       const apiUrl = `https://harvest.greenhouse.io/v1/candidates/${candidateId}/applications`;
-
-      const body: any = {
-        job_id: jobId,
+  
+      const body = {
+        job_id: parseInt(jobId, 10), 
+        attachments: [{
+          filename: resume.filename,
+          type: "resume",
+          content: resume.content,
+          content_type: resume.content_type
+        }]
       };
-
+  
       try {
         const response = await fetch(apiUrl, {
           method: "POST",
@@ -127,21 +138,21 @@ export const itemsRouter = createTRPCRouter({
           },
           body: JSON.stringify(body),
         });
-
+  
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(
             `Failed to submit application: ${response.status} ${response.statusText} - ${errorText}`,
           );
         }
-
+  
         const data = await response.json();
         return data;
       } catch (error) {
         throw new Error(`Failed to submit application: ${error.message}`);
       }
     }),
-
+    
   moveCandidate: publicProcedure
     .input(
       z.object({
