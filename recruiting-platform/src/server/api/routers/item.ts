@@ -15,19 +15,6 @@ interface Role {
   company: string;
 }
 
-const candidates: Candidate[] = [
-  {
-    id: "1",
-    name: "Alice Johnson",
-    status: "Onsite",
-    roleStatuses: [{ roleId: "1", status: "Applied" }],
-  },
-];
-
-const roles: Role[] = [
-  { id: "1", name: "Software Engineer", company: "Airbnb" },
-  { id: "2", name: "Product Manager", company: "Google" },
-];
 
 export const itemsRouter = createTRPCRouter({
   getAllCandidates: publicProcedure.query(() => {

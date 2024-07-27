@@ -4,37 +4,38 @@ import { useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
 import { Role } from "../_components/role";
 
+
 export default function RolesPage() {
-  const { data: roles, error, isLoading } = api.role.getAll.useQuery();
+  const jobId = "4280628007"; // hard coding this for now assuming 1 job
+  const { data: job, error: jobError, isLoading: jobLoading } = api.item.getJobById.useQuery({ id: jobId });
   const router = useRouter();
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error.message}</div>;
+  if (jobLoading) return <div>Loading...</div>;
+  if (jobError) return <div>Error: {jobError.message}</div>;
 
-  const handleRoleClick = (id: number) => {
+  const handleRoleClick = (id: string) => {
     router.push(`/role/${id}`);
   };
 
-
   return (
     <div className="w-full max-w-6xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">Roles you're recruiting for:</h1>
+      <h1 className="text-2xl font-bold mb-4">Roles you are recruiting for:</h1>
       <div className="flex flex-wrap gap-4">
-        {roles?.map((role) => (
+        {job ? (
           <div
-            key={role.id}
+            key={job.id}
             className="cursor-pointer"
-            onClick={() => handleRoleClick(role.id)}
+            onClick={() => handleRoleClick(job.id)}
           >
             <Role
-              id={role.id}
-              initialTitle={role.title}
-              initialCompany={role.company}
+              id={job.id}
+              initialTitle={job.name}
             />
           </div>
-        ))}
+        ) : (
+          <p>No job details available.</p>
+        )}
       </div>
-
     </div>
   );
 }
