@@ -16,4 +16,5 @@ Recruiter view: Recruiter can view the active roles they're currently recruiting
 - Refactor items router.
 - Remove hardcoding of job and candidate. Then will need to create a new candidate in entry point. 
 - Implement read only tracker for candidate view. 
+- Ran into type errors in recruitmentDashboard component. need to go back and fix root issues when there's more time. 
 
