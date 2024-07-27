@@ -71,12 +71,12 @@ export function RecruiterDashboard({ roleId, roleTitle }: RecruiterDashboardProp
     console.log('Current trackerData:', trackerData);
     console.log('Current stageMap:', stageMap);
     console.log('Current stageIdMap:', stageIdMap);
-
+  
     try {
       let currentStatus: string | undefined;
       let applicationId: string | undefined;
       let candidateName: string | undefined;
-
+  
       Object.keys(trackerData).forEach(status => {
         const candidate = trackerData[status]?.candidates.find(candidate => candidate.id === candidateId);
         if (candidate) {
@@ -85,46 +85,52 @@ export function RecruiterDashboard({ roleId, roleTitle }: RecruiterDashboardProp
           candidateName = candidate.name;
         }
       });
-
+  
       if (!currentStatus || !applicationId || !candidateName) {
         throw new Error(`Candidate with ID ${candidateId} not found in any status.`);
       }
-
+  
       const fromStageId = stageMap[currentStatus];
       let toStageId: number;
       let newStatusName: string;
-
+  
       if (stageMap[newStatus]) {
         toStageId = stageMap[newStatus];
         newStatusName = newStatus;
       } else {
         throw new Error(`Invalid new status: ${newStatus}`);
       }
-
+  
       if (fromStageId === undefined || toStageId === undefined) {
         throw new Error(`Could not find stage ID for current status ${currentStatus} or new status ${newStatus}`);
       }
-
+  
       console.log('Moving candidate:', { applicationId, fromStageId, toStageId });
-
+  
       await moveCandidateMutation.mutateAsync({
         applicationId,
         fromStageId,
         toStageId,
       });
-
+  
       setTrackerData(prevData => {
         const updatedData = { ...prevData };
-        updatedData[currentStatus].candidates = updatedData[currentStatus].candidates.filter(c => c.id !== candidateId);
-        
+  
+        if (updatedData[currentStatus]) {
+          updatedData[currentStatus].candidates = updatedData[currentStatus].candidates.filter(c => c.id !== candidateId);
+        }
+  
         if (!updatedData[newStatusName]) {
           updatedData[newStatusName] = { candidates: [] };
         }
-        updatedData[newStatusName].candidates.push({ 
-          id: candidateId, 
-          name: candidateName,
-          applicationId 
-        });
+  
+        if (!updatedData[newStatusName].candidates.find(c => c.id === candidateId)) {
+          updatedData[newStatusName].candidates.push({ 
+            id: candidateId, 
+            name: candidateName,
+            applicationId 
+          });
+        }
         
         return updatedData;
       });
