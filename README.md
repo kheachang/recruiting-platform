@@ -4,7 +4,7 @@ A webapp with two entry points: Recruiter and Candidate. Candidates are able to 
 
 Candidate view: Recruiter invites a candidate to submit an application. In this application, the candidate already exists in Greenhouse and has submitted applications for the job before (previously rejected). The application allows a previously rejected candidate to resubmit for a job. Once a job has been submitted, this is the end of the candidate journey.
 
-Recruiter view: Recruiter can view the active roles they're currently recruiting for. They're able to view a tracker of candidates' progress for each job. They're able to move the candidate between 'Application Review' and 'Offer' stages, which then updates in Greenhouse. 
+Recruiter view: Recruiter can view the active roles they're currently recruiting for. They're able to view a tracker of candidates' progress for each job. They're able to move the candidate between 'Application Review' and 'Offer' stages (this job stage did not include 'Rejected' in the api response), which then updates in Greenhouse. 
 
 ## Dependencies
 
